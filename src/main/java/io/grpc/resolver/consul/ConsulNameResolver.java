@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 
 public class ConsulNameResolver extends NameResolver {
     public static final String DEFAULT_ADDRESS = "localhost";
-    public static final Integer DEFAULT_PORT = 8383;
+    public static final Integer DEFAULT_PORT = 8500;
     private static final Logger logger = LoggerFactory.getLogger(ConsulNameResolver.class);
     private final String authority;
     private final String service;
@@ -65,10 +65,12 @@ public class ConsulNameResolver extends NameResolver {
         svHealth.addListener((Map<ServiceHealthKey, ServiceHealth> newValues) -> {
             List<EquivalentAddressGroup> servers = null;
             try {
-                servers = newValues.keySet().stream()
-                        .map(key -> new InetSocketAddress(key.getHost(), key.getPort()))
+                servers = newValues.values().stream()
+                        .map(serviceHealth -> new InetSocketAddress(serviceHealth.getService().getAddress(),
+                                serviceHealth.getService().getPort()))
                         .map(address -> new EquivalentAddressGroup(address, Attributes.EMPTY))
                         .collect(Collectors.toList());
+
                 logger.warn("Servers: {}", servers);
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
